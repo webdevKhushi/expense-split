@@ -1,8 +1,5 @@
-// ✅✅✅ FINAL VERSION: server/index.js ✅✅✅
-
 import express from "express";
 import cors from "cors";
-import bodyParser from "body-parser";
 import pkg from "pg";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
@@ -14,7 +11,7 @@ const JWT_SECRET = "your_super_secret_key";
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json()); // replaced bodyParser
 
 // PostgreSQL Connection
 const pool = new Pool({
@@ -25,20 +22,17 @@ const pool = new Pool({
   port: 5433,
 });
 
-// ✅ Auth Middleware with Debug Logs
+// Auth Middleware
 function authenticateToken(req, res, next) {
   const authHeader = req.headers["authorization"];
-  console.log("🔐 Auth Header:", authHeader); // debug log
   const token = authHeader?.split(" ")[1];
 
   if (!token) {
-    console.warn("❌ Token missing");
     return res.status(401).json({ message: "Token missing" });
   }
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
     if (err) {
-      console.warn("❌ Token invalid:", err.message);
       return res.status(403).json({ message: "Token invalid" });
     }
     req.user = user;
@@ -46,7 +40,7 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// ✅ Signup
+// Signup
 app.post("/api/signup", async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password)
@@ -63,7 +57,7 @@ app.post("/api/signup", async (req, res) => {
   }
 });
 
-// ✅ Login
+// Login
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
   try {
@@ -80,7 +74,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// ✅ Create Room
+// Create Room
 app.post("/api/rooms", authenticateToken, async (req, res) => {
   const { room_name } = req.body;
   const created_by = req.user.username;
@@ -100,7 +94,7 @@ app.post("/api/rooms", authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Join Room
+// Join Room
 app.post("/api/join-room", authenticateToken, async (req, res) => {
   const { room_id } = req.body;
   const username = req.user.username;
@@ -121,7 +115,7 @@ app.post("/api/join-room", authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Add Expense to Room
+// Add Expense to Room
 app.post("/api/room/:roomId/expense", authenticateToken, async (req, res) => {
   const { roomId } = req.params;
   const { desc, amount, people } = req.body;
@@ -142,7 +136,7 @@ app.post("/api/room/:roomId/expense", authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Get Room Expense History
+// Get Room Expense History
 app.get("/api/room/:roomId/history", authenticateToken, async (req, res) => {
   const { roomId } = req.params;
   try {
@@ -157,7 +151,7 @@ app.get("/api/room/:roomId/history", authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Personal Expense
+// Personal Expense
 app.post("/api/expense", authenticateToken, async (req, res) => {
   const { desc, amount, people } = req.body;
   const username = req.user.username;
@@ -177,7 +171,7 @@ app.post("/api/expense", authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ Personal History
+// Personal History
 app.get("/api/history", authenticateToken, async (req, res) => {
   const username = req.user.username;
   try {
@@ -192,7 +186,8 @@ app.get("/api/history", authenticateToken, async (req, res) => {
   }
 });
 
-app.get("/", (req, res) => res.send("🚀 Server is running!"));
+// Root
+app.get("/", (req, res) => res.send("Server is running"));
 app.listen(PORT, () => {
-  console.log(`✅ Backend running at http://localhost:${PORT}`);
+  console.log(`Backend running at http://localhost:${PORT}`);
 });
